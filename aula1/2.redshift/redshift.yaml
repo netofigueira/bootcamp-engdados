@@ -1,0 +1,116 @@
+# Specifies a cluster. A cluster is a fully managed
+# data warehouse that consists of a set of compute nodes.
+# VPC: Virtual Private Cloud
+
+Resources: 
+  NetoRedshift:
+    Type: AWS::Redshift::Cluster
+    Properties: 
+      AllowVersionUpgrade: True
+      AutomatedSnapshotRetentionPeriod: 5
+      AvailabilityZone: us-east-1a
+      # cluster name that shows in panel
+      ClusterIdentifier: my-cluster
+
+      #reference name of a resource.
+      ClusterParameterGroupName: !Ref RedshiftParameterGroup 
+      ClusterSubnetGroupName: !Ref RedshiftParameterGroup
+      ClusterVersion: String
+      VpcSecurityGroupIds: 
+        - !Ref RedshiftEC2SecurityGroup
+      
+      #if you dont specify, you a get a single node cluster
+      ClusterType: multi-node
+      DBName: production
+      Encrypted: True
+      MasterUsername: admin
+      MasterUserPassword: Admin1234
+      NodeType: dc2.large
+      NumberOfNodes: 2
+      PublicAccessible: True
+
+
+  RedshiftParameterGroup:
+    Type: AWS::Redshift::ClusterParameterGroup
+    Properties:
+      Description: Parameter group for redshift cluster
+      ParameterGroupFamily: redshift-1.0
+      Parameters:
+        - ParameterName: max_concurrency_scaling_clusters
+          ParameterValue: 1
+
+
+  RedshiftSubnetGroup:
+    Type: 'AWS::Redshift::ClusterSubnetGroup'
+    Properties:
+      Description: Redshift Subnet group
+      SubnetIds:
+        - !Ref RedshiftSubnet
+
+
+
+
+  #creates the net where the redshift will be available
+
+  RedshiftSubnet:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: us-east-1a
+      CidrBlock: 10.0.0.0/24
+      VpcId: !Ref RedshiftVPC
+  
+
+  RedshiftVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+
+  RedshiftEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Redshift. Public access
+      GroupName: redshift-security-group
+      #public available (onde o redshifr consegue se conectar)
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 5439
+          IpProtocol: tcp
+          ToPort: 5439
+      #quem consegue acessar o redshift: se 0.0.0.0/0: todo mundo
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 5439
+          IpProtocol: tcp
+          ToPort: 5439
+      VpcId: !Ref RedshiftVPC  
+
+
+
+#CONSEGUIRIA FAZER O DEPLOY SEM O INTERNET GATEWAY MAS NÃO TERIA ACESSO
+#COULD DEPLOY IT BUT WITHOUT INTERNET GATEWAY WOULD HAVE ACCESS DENIED.
+  RedshiftVPCInternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  RedshiftVPCAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref RedshiftVPC
+      InternetGatewayId: !Ref RedshiftVPCInternetGateway
+
+  RedshiftRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref RedshiftVPC
+
+  RedshiftVPCRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref RedshiftVPCInternetGateway
+      RouteTableId: !Ref RedshiftRouteTable
+
+  RedshiftSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RedshiftRouteTable
+      SubnetId: !Ref RedshiftSubnet

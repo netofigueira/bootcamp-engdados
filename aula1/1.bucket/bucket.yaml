@@ -1,0 +1,21 @@
+Description: creates a S3 Bucket
+
+Resources:
+  BucketNetoS3:
+    Type: AWS::S3::Bucket
+    Properties: 
+
+      BucketEncryption: 
+          ServerSideEncryptionConfiguration: 
+             - ServerSideEncryptionByDefault: 
+                  #KMSMasterKeyID: String // if want to use a personal cripto key
+                  SSEAlgorithm: AES256
+
+
+      BucketName: bucket-neto-teste-0
+        #bucket privacy config
+      PublicAccessBlockConfiguration: 
+          BlockPublicAcls: True
+          BlockPublicPolicy: True
+          IgnorePublicAcls: True
+          RestrictPublicBuckets: True
