@@ -6,7 +6,7 @@ Resources:
   BucketBeliscoS3:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: bucket-belisco-turma-4-github-actions
+      BucketName: bucket-neto-github-actions
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
