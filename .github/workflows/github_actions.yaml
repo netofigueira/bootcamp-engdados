@@ -1,5 +1,6 @@
 name: Deploy Bucket
 
+#condicao: quando ocorrer um push para o branch 'githu_actions', excecuta o workflow
 on: 
   push:
     branches:
@@ -8,12 +9,13 @@ on:
 
 jobs:
   deploy:
+    #vai rodar num docker
     runs-on:  ubuntu-latest
     steps:
-      #copia o codigo do repositorio pro docker
+      #copia o codigo do repositorio pro docker - condicao propria do actions
       - uses: actions/checkout@v2
       - name: Set up Python
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v2 # tbm funcao do actions
         with:
           python-version: '3.x'
       - name: Install dependencies
